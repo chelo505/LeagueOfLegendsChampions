@@ -21,16 +21,10 @@
         </div>
     </div>
     </div>
-    <div class="sidebar-right">
+    <button class="sidebar-button" @click="showHideSidebar"></button>
+    <div class="sidebar-left" v-show="showSidebar">
         <ul>
-            <button v-for="(champion) in championsRight" @click="scrollToChampion(champion)">
-                {{ champion.name }}
-            </button>
-        </ul>
-    </div>
-    <div class="sidebar-left">
-        <ul>
-            <button v-for="(champion) in championsLeft" @click="scrollToChampion(champion)">
+            <button v-for="(champion) in champions" @click="scrollToChampion(champion)">
                 {{ champion.name }}
             </button>
         </ul>
@@ -82,16 +76,34 @@ export default {
     data() {
     return {
         champions: [],
-        championsLeft: [],
-        championsRight: [],
         hoveredSkin: null,
         searchQuery: '',
-        searchResults: []
+        searchResults: [],
+        showSidebar: false
     }
     },
     created() {
     this.loadChampionData();
-    },
+    
+    const savedSidebarState = sessionStorage.getItem('sidebarOpen');
+    if (savedSidebarState != null) {
+        this.showSidebar = savedSidebarState == 'true';
+        
+        this.$nextTick(() => {
+            const sideBarButton = document.getElementsByClassName('sidebar-button');
+            const sideBar = document.getElementsByClassName('sidebar-left');
+            if (this.showSidebar) {
+                sideBarButton[0].style.left = '630px';
+                sideBar[0].style.maxWidth = '626px';
+            } else {
+                sideBarButton[0].style.left = '0px';
+                sideBar[0].style.maxWidth = '0px';
+            }
+        });
+    }
+
+    window.addEventListener('beforeunload', this.resetSidebarState);
+},
     methods: {
     loadChampionData() {
         const context = require.context('@/assets/champions', false, /\.json$/);
@@ -109,15 +121,6 @@ export default {
         });
 
         this.champions = loadedChampions;
-
-        let counter = 0;
-        for (let champion of loadedChampions) {
-            if (counter <= (loadedChampions.length)/2) {
-                this.championsLeft.push(champion);
-            }
-            else this.championsRight.push(champion);
-            counter+=1;
-        }
     },
     showSkinHover(skin) {
         this.hoveredSkin = skin;
@@ -193,9 +196,31 @@ export default {
         skinNum: skinNum
         },
         replace: false
-  });
-}
+     });
+    },
+    showHideSidebar() {
+        this.showSidebar = !this.showSidebar
+
+        sessionStorage.setItem('sidebarOpen', this.showSidebar);
+
+        const sideBarButton = document.getElementsByClassName('sidebar-button')
+        const sideBar = document.getElementsByClassName('sidebar-left')
+        if (this.showSidebar == true) {
+            sideBarButton[0].style.left = '630px'
+            sideBar[0].style.maxWidth = '626px'
+        }
+        else {
+            sideBarButton[0].style.left = '0px'
+            sideBar[0].style.maxWidth = '0px'
+        }
+    },
+    resetSidebarState() {
+        sessionStorage.removeItem('sidebarOpen');
+    },
+    beforeDestroy() {
+        window.removeEventListener('beforeunload', this.resetSidebarState);
     }
+}
 };
 
 </script>
@@ -325,14 +350,12 @@ h2 {
     to { opacity: 1; }
 }
 
-/* Ensure no bullet points for the list */
 ul {
     list-style-type: none;
     padding: 1px;
     margin: 0px;
 }
 
-/* Style for each list item (each champion) */
 li {
     background-color: #f8f8f8;
     border-radius: 10px;
@@ -348,7 +371,6 @@ li {
     margin-right: auto;
 }
 
-/* Hover effect for list item */
 #champSkins:hover {
     background-color: #e2e2e2;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.322);
@@ -370,7 +392,6 @@ li {
     user-select: none;
 }
 
-/* Style for champion name */
 #champName {
     font-size: 24px;
     font-weight: bold;
@@ -378,7 +399,6 @@ li {
     margin: 10px 0;
 }
 
-/* Style for champion title */
 #champTitle {
     font-size: 18px;
     font-style: italic;
@@ -386,7 +406,6 @@ li {
     margin: 5px 0;
 }
 
-/* Style for lore text */
 #champLore {
     font-size: 14px;
     color: #777;
@@ -395,7 +414,6 @@ li {
     margin: 10px 0;
 }
 
-/* Style for the champion image */
 #champIcon {
     width: 100px;
     height: 100px;
@@ -405,56 +423,18 @@ li {
     border: 3px solid #ddd;
 }
 
-.sidebar-right {
-    background-color: rgb(24, 24, 24, 0.9);
-    position: fixed;
-    margin: 0;
-    right:0;
-    top: 300px;
-    width: 314px;
-    height: 448px;
-    padding: 2px;
-    padding-top: 4px;
-    z-index: 200;
-}
-
-.sidebar-right button {
-    background: none;
-    color: #305070;
-    display: grid;
-    float: left;
-    width: 100px;
-    height: 3px;
-    margin: 2px;
-    padding: 4px;
-    padding-right: 0px;
-    padding-bottom: 8px;
-    font-size: small;
-    text-align: left;
-    overflow: hidden;
-    text-wrap: nowrap;
-    line-height: 0px;
-    border:1;
-    border-color: rgb(24, 24, 24);
-    border-width: 0;
-}
-
-.sidebar-right button:hover {
-    color: #3498db;
-    cursor: pointer
-}
-
 .sidebar-left {
-    background-color: rgb(24, 24, 24, 0.9);
+    background-color: rgba(24, 24, 24, 0.9);
     position: fixed;
     margin: 0;
+    max-width: 0;
     left: 0;
     top: 292px;
-    width: 314px;
-    height: 463px;
+    height: 465px;
     padding: 2px;
-    padding-top: 4px;
+    padding-top: 3px;
     z-index: 200;
+    transition: max-width 0.4s;
 }
 
 .sidebar-left button {
@@ -483,4 +463,24 @@ li {
     cursor: pointer
 }
 
+.sidebar-button {
+    position: fixed;
+    background: transparent;
+    left: 0;
+    width: 12px;
+    height: 7px;
+    top: 293px;
+    cursor: pointer;
+    border-left: 30px solid #3498db;
+    border-right: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-top: 20px solid transparent;
+    clip-path: polygon(0% 0%, 0% 100%, 100% 50%);
+    transition-property: left, filter;
+    transition-duration: 0.4s;
+}
+
+.sidebar-button:hover {
+    filter:brightness(150%) drop-shadow(0px 0px 1px #27a3f5);
+}
 </style>
