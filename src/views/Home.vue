@@ -1,5 +1,10 @@
 <template>
 <div class="app">
+    <Transition>
+    <button class="bottom-scroll" v-show="!positionOnPagePastHalf" @click="scrollToBottom">
+        Scroll to bottom
+    </button>
+    </Transition>   
     <div class="search-container">
     <input 
         type="text" 
@@ -32,7 +37,8 @@
     <ul>
     <li v-for="(champion, index) in champions" 
     :key="index"
-    :ref="`${champion.name}`">
+    :ref="`${champion.name}`"
+    class="champion-cards">
         <h2 id="champName">{{ champion.name }}</h2>
         <h3 id="champTitle">{{ champion.title }}</h3>
         <p id="champLore">{{ champion.lore }}</p>
@@ -64,13 +70,13 @@
         </ul>
     </li>
     </ul>
+    <button class="top-scroll" v-show="positionOnPagePastHalf" @click="scrollToTop">Scroll to top</button>
 </div>
 </template>
 
 
 <script>
 import router from '@/router';
-
 
 export default {
     data() {
@@ -79,8 +85,15 @@ export default {
         hoveredSkin: null,
         searchQuery: '',
         searchResults: [],
-        showSidebar: false
+        showSidebar: false,
+        positionOnPagePastHalf: false
     }
+    },
+    mounted() {
+        window.addEventListener("scroll", this.updateScrollPosition)
+    },
+    unmounted() {
+        window.removeEventListener("scroll", this.updateScrollPosition)
     },
     created() {
     this.loadChampionData();
@@ -166,18 +179,17 @@ export default {
         .slice(0, 5);
 
         this.searchResults = searchResults;
-        console.log(searchResults)
     },
     scrollToChampion(champion) {
         const championEls = this.$refs[`${champion.name}`];
         
         if (championEls && championEls.length > 0) {
         const championEl = championEls[0];
-        
-        championEl.scrollIntoView({ 
-            behavior: 'smooth', 
+        console.log(championEl)
+        championEl.scrollIntoView({
+            behavior: 'smooth',
             block: 'start'
-        });
+        })
 
         championEl.classList.add('highlight');
         setTimeout(() => {
@@ -219,6 +231,24 @@ export default {
     },
     beforeDestroy() {
         window.removeEventListener('beforeunload', this.resetSidebarState);
+    },
+    scrollToBottom() {
+        const champEl = this.$refs["Zyra"]
+        champEl[0].scrollIntoView({
+            behavior: 'smooth',
+            block: 'end'
+        })
+    },
+    scrollToTop() {
+        const champEl = this.$refs["Aatrox"]
+        champEl[0].scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        })
+    },
+    updateScrollPosition() {
+        if (document.documentElement.scrollTop>100000) this.positionOnPagePastHalf = true
+        else this.positionOnPagePastHalf = false
     }
 }
 };
@@ -356,7 +386,7 @@ ul {
     margin: 0px;
 }
 
-li {
+.champion-cards {
     background-color: #f8f8f8;
     border-radius: 10px;
     padding: 20px;
@@ -369,6 +399,10 @@ li {
     max-width: 500px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.champion-cards:last-child {
+    margin-bottom: 145px;
 }
 
 #champSkins:hover {
@@ -482,5 +516,35 @@ li {
 
 .sidebar-button:hover {
     filter:brightness(150%) drop-shadow(0px 0px 1px #27a3f5);
+}
+
+.bottom-scroll {
+    right: 560px;
+    position: fixed;
+    height: 30px;
+    bottom: 15px;
+    padding: 7px;
+    line-height: 0;
+    background-color: rgb(24, 24, 24);
+    border: 0;
+    color: white;
+    cursor: pointer;
+    opacity: 90%;
+    border-radius: 5px;
+}
+
+.top-scroll {
+    position: fixed;
+    right: 580px;
+    height: 30px;
+    top: 15px;
+    padding: 7px;
+    line-height: 0;
+    background-color: rgb(24, 24, 24);
+    border: 0;
+    color: white;
+    cursor: pointer;
+    opacity: 90%;
+    border-radius: 5px;
 }
 </style>
